@@ -16,8 +16,12 @@ class IntersectionChecker:
         self.direction = direction
         self.path = path2dem
         self.pointcloud: np.ndarray = self.read_dem()
+        # Pointcloud bounds
         self.min_x, self.min_y, self.min_z = None, None, None
         self.max_x, self.max_y, self.max_z = None, None, None
+
+        # Plane approximation coefficients
+        self.a, self.b, self.c, self.d = None, None, None, None
         self.closest_point = None
 
         if not self.is_ray_valid():
@@ -74,9 +78,9 @@ class IntersectionChecker:
         normal = pca.components_[-1]
 
         # Plane equation coefficients: ax + by + cz + d = 0
-        a, b, c = normal
-        d = -np.dot(normal, pca.mean_)
-        return a, b, c, d
+        self.a, self.b, self.c = normal
+        self.d = -np.dot(normal, pca.mean_)
+        return self.a, self.b, self.c, self.d
 
     def find_closest_point(self) -> np.ndarray:
         # Normalize the direction vector
@@ -98,7 +102,7 @@ class IntersectionChecker:
         
         return self.closest_point
 
-    def plot_results(self, subset: bool, ray: bool) -> None:
+    def plot_results(self, subset=True, ray=True, plane=True) -> None:
         
         # Create figure
         fig = plt.figure(figsize=(10, 8))
@@ -120,6 +124,12 @@ class IntersectionChecker:
             ax.plot([self.origin[0], self.origin[0] + self.direction[0]],
                     [self.origin[1], self.origin[1] + self.direction[1]],
                     [self.origin[2], self.origin[2] + self.direction[2]], 'r-', label='Ray')
+            
+        if plane:
+            # Plot plane
+            xx, yy = np.meshgrid(np.linspace(self.min_x, self.max_x, 1000), np.linspace(self.min_y, self.max_y, 1000))
+            zz = (-self.a * xx - self.b * yy - self.d) / self.c
+            ax.plot_surface(xx, yy, zz, color='g', alpha=0.2)
             
         # Plot closest DEM point if found
         if self.closest_point is not None:
@@ -177,7 +187,7 @@ def main():
     print("Closest point on the DEM to the ray:", inter.closest_point)
 
     if VISUALIZATION:
-        inter.plot_results(subset=True, ray=True)
+        inter.plot_results()
 
 
 if __name__ == "__main__":
