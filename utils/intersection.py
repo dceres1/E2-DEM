@@ -19,12 +19,15 @@ class IntersectionChecker:
         # Pointcloud bounds
         self.min_x, self.min_y, self.min_z = None, None, None
         self.max_x, self.max_y, self.max_z = None, None, None
+        self.__get_pointcloud_bounds()
 
         # Plane approximation coefficients
         self.a, self.b, self.c, self.d = None, None, None, None
+        self.__fit_plane_in_pointcloud()
         self.closest_point = None
 
         if not self.is_ray_valid():
+            self.plot_results()
             sys.exit(0)
 
     def read_dem(self) -> np.ndarray:
@@ -40,30 +43,54 @@ class IntersectionChecker:
 
     def is_ray_valid(self) -> bool:
         """Finds the intersection point of the ray with the cut plane and checks if it is within the bounds."""
-        self.__get_pointcloud_bounds()
-        a, b, c, d = self.__fit_plane_in_pointcloud()
+        if not self.is_origin_near_bounds(5000):
+            print("ERROR: Origin have to be near to the pointcloud bounds")
+            self.__print_pointcloud_bounds()
+            return False
 
         x0, y0, z0 = self.origin
         vx, vy, vz = self.direction
 
         # Calculate t for the ray-plane intersection
-        denominator = a * vx + b * vy + c * vz
+        denominator = self.a * vx + self.b * vy + self.c * vz
         if np.isclose(denominator, 0):
             print("ERROR: The ray is parallel to the plane")
             return False
 
-        t = -(a * x0 + b * y0 + c * z0 + d) / denominator
+        t = -(self.a * x0 + self.b * y0 + self.c * z0 + self.d) / denominator
         intersection_point = self.origin + t * self.direction
 
-        # Check if the intersection point is within the cut plane bounds
+        # Check if the intersection point is within the plane bounds
         x_int, y_int, z_int = intersection_point
         if self.min_x <= x_int <= self.max_x and self.min_y <= y_int <= self.max_y:
             return True
         else:
             print("ERROR: Ray outside bounds of pointcloud")
-            print(f"Intersection (x,y,z): {x_int:.3f}, {y_int:.3f}, {z_int:.3f}")
-            print(f"Pointcloud bounds: min_x: {self.min_x:.3f}, max_x: {self.max_x:.3f}, min_y: {self.min_y:.3f}, max_y: {self.max_y:.3f}")
+            print(f"INFO: Intersection with approx. plane: (x:{x_int:.3f}, y:{y_int:.3f}, z:{z_int:.3f})")
+            self.__print_pointcloud_bounds()
             return False
+
+    def is_origin_near_bounds(self, threshold: float) -> bool:
+        """
+        Check if the given origin point is near the specified bounds within a threshold distance.
+        - threshold: Maximum distance threshold to consider "nearby".
+        """
+        x, y, z = self.origin
+        
+        # Calculate distance to the nearest boundary
+        distance_x = min(abs(x - self.min_x), abs(x - self.max_x))
+        distance_y = min(abs(y - self.min_y), abs(y - self.max_y))
+        distance_z = min(abs(z - self.min_z), abs(z - self.max_z))
+        
+        # Calculate Euclidean distance to the closest point on the boundary
+        closest_distance = np.sqrt(distance_x**2 + distance_y**2 + distance_z**2)
+        
+        # Check if the closest distance is within the threshold
+        if closest_distance <= threshold:
+            return True
+        else:
+            return False
+        
 
     def __get_pointcloud_bounds(self) -> None:
         min_values = np.min(self.pointcloud, axis=0)
@@ -81,6 +108,9 @@ class IntersectionChecker:
         self.a, self.b, self.c = normal
         self.d = -np.dot(normal, pca.mean_)
         return self.a, self.b, self.c, self.d
+
+    def __print_pointcloud_bounds(self) -> None:
+        print(f"INFO: Pointcloud bounds: (min_x: {self.min_x:.3f}, max_x: {self.max_x:.3f}), (min_y: {self.min_y:.3f}, max_y: {self.max_y:.3f}), (min_z:{self.min_z:.3f}, max_z:{self.max_z:.3f})")
 
     def find_closest_point(self) -> np.ndarray:
         # Normalize the direction vector
@@ -175,8 +205,8 @@ def main():
     # Testing values
     # origin = np.array([-0.1, -0.1, 0.97])
     # direction = np.array([0.3, 0.3, 0.04])
-    origin = np.array([599_700, 5_287_000, 660])
-    direction = np.array([400, 200, 70])
+    origin = np.array([599_000, 5_286_000, 660])
+    direction = np.array([400, 200, 60])
 
 
 
