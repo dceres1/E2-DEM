@@ -188,7 +188,7 @@ def parse_args(args) -> Tuple[np.ndarray, np.ndarray]:
 def main():
     # Check if the correct number of arguments are provided
     if len(sys.argv) != 7:
-        print("Usage: python ray_intersection.py <x> <y> <z> <vx> <vy> <vz>")
+        print("Usage: python3 intersection.py <x> <y> <z> <vx> <vy> <vz>")
         sys.exit(1)
     origin, direction = parse_args(sys.argv)
 
