@@ -35,11 +35,6 @@ class IntersectionChecker:
         """Use numpy to read DEM file efficiently"""
         print("Reading txt file ...")
         data = np.genfromtxt(self.path, delimiter=' ')
-        
-        # np.random.seed(0)
-        # data = np.random.rand(1_000, 3)  # Replace with actual DEM data
-        # data[:,2] = 1
-        
         return data
 
     def is_ray_valid(self) -> bool:
@@ -196,17 +191,6 @@ def main():
         print("Usage: python ray_intersection.py <x> <y> <z> <vx> <vy> <vz>")
         sys.exit(1)
     origin, direction = parse_args(sys.argv)
-
-    ## Harcoded values
-    # Values for DEM
-    # origin = np.array([599_400, 5_287_400, 660])
-    # direction = np.array([400, 200, 70])
-
-    # Testing values
-    # origin = np.array([-0.1, -0.1, 0.97])
-    # direction = np.array([0.3, 0.3, 0.04])
-
-
 
     # Compute closest DEM point
     inter = IntersectionChecker(origin, direction, DEM_PATH)
