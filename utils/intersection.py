@@ -27,7 +27,8 @@ class IntersectionChecker:
         self.closest_point = None
 
         if not self.is_ray_valid():
-            self.plot_results()
+            if VISUALIZATION:
+                self.plot_results()
             sys.exit(0)
 
     def read_dem(self) -> np.ndarray:
@@ -42,7 +43,7 @@ class IntersectionChecker:
         return data
 
     def is_ray_valid(self) -> bool:
-        """Finds the intersection point of the ray with the cut plane and checks if it is within the bounds."""
+        """Finds the intersection point of the ray with the approximation plane and checks if it is within the bounds."""
         if not self.is_origin_near_bounds(5000):
             print("ERROR: Origin have to be near to the pointcloud bounds")
             self.__print_pointcloud_bounds()
@@ -90,7 +91,6 @@ class IntersectionChecker:
             return True
         else:
             return False
-        
 
     def __get_pointcloud_bounds(self) -> None:
         min_values = np.min(self.pointcloud, axis=0)
@@ -192,12 +192,12 @@ def parse_args(args) -> Tuple[np.ndarray, np.ndarray]:
 
 def main():
     # Check if the correct number of arguments are provided
-    # if len(sys.argv) != 7:
-    #     print("Usage: python ray_intersection.py <x> <y> <z> <vx> <vy> <vz>")
-    #     sys.exit(1)
-    # origin, direction = parse_args(sys.argv)
+    if len(sys.argv) != 7:
+        print("Usage: python ray_intersection.py <x> <y> <z> <vx> <vy> <vz>")
+        sys.exit(1)
+    origin, direction = parse_args(sys.argv)
 
-    # Harcoded values
+    ## Harcoded values
     # Values for DEM
     # origin = np.array([599_400, 5_287_400, 660])
     # direction = np.array([400, 200, 70])
@@ -205,8 +205,6 @@ def main():
     # Testing values
     # origin = np.array([-0.1, -0.1, 0.97])
     # direction = np.array([0.3, 0.3, 0.04])
-    origin = np.array([599_000, 5_286_000, 660])
-    direction = np.array([400, 200, 60])
 
 
 
